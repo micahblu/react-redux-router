@@ -1,6 +1,6 @@
 {
   "name": "react-redux-router",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A simple router for react redux applications",
   "main": "index.js",
   "scripts": {
@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/micahblu/react-redux-router/issues"
   },
-  "homepage": "https://github.com/micahblu/react-redux-router#readme"
+  "homepage": "https://github.com/micahblu/react-redux-router#readme",
+  "devDependencies": {
+    "react": "^15.5.4"
+  }
 }

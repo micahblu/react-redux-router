@@ -61,10 +61,6 @@ export class Router extends React.Component {
 		})
 	}
 
-	componentWillUpdate(nextProps, nextState) {
-		console.log('nextState', nextState)
-	}
-
 	render() {
 		let currentPath = this.path.hash.replace(/#/, '') || '/'
 
@@ -91,6 +87,6 @@ export class Link extends React.Component {
 	}
 
 	render() {
-		return <a href={'#' + this.props.to}>{this.props.children}</a>
+		return React.createElement('div', {href: `${this.props.to}`}, `${this.props.children}`)
 	}
 }
