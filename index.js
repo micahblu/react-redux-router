@@ -87,6 +87,6 @@ export class Link extends React.Component {
 	}
 
 	render() {
-		return React.createElement('div', {href: `${this.props.to}`}, `${this.props.children}`)
+		return <a href={'#' + this.props.to}>{this.props.children}</a>
 	}
 }
