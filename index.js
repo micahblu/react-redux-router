@@ -22,7 +22,6 @@ export class Route extends React.Component {
 		return null
 	}
 }
-
 export const routerReducer = (state = {}, action) => {
 	switch(action.type) {
 		case '@ROUTE_CHANGE':
@@ -39,14 +38,11 @@ export const routerReducer = (state = {}, action) => {
 					time: action.payload.time
 				}]
 			})
-
 			break
 		default:
 			return state
 	}
 }
-
-export default history
 
 export class Router extends React.Component {
 	constructor(props) {
@@ -61,7 +57,7 @@ export class Router extends React.Component {
 		let self = this
 		this.store.subscribe(() => {
 			// ensure path matches
-			if(this.store.getState().router.paths && this.store.getState().router.paths.length) {
+			if(this.store.getState().router && this.store.getState().router.paths && this.store.getState().router.paths.length) {
 				statePath = this.store.getState().router.paths.slice(-1)[0].path
 				self.path.replace('#' + statePath)
 			}
@@ -91,13 +87,12 @@ export class Router extends React.Component {
 
 		// load component based on path
 		let urlSegments = currentPath.split('/').slice(1)
-		let ch = this.props.children.props.children
+		let ch = this.props.children
 		let matchSegments = []
 		let params = {}
 
 		for(var i=0, j=ch.length; i<j; i++) {
 			matchSegments = ch[i].props.path.split('/').slice(1)
-
 			for(var k=0, l=urlSegments.length; k<l; k++) {
 				if(urlSegments[k] === matchSegments[k]) {
 					this.component = ch[i].props.component
@@ -108,11 +103,14 @@ export class Router extends React.Component {
 				}
 			}
 		}
-
 		if(this.component) {
 			return React.createElement(this.component, Object.assign({}, this.props, {params: params, location: location}))
 		} else {
-			return <h1>No route found</h1>
+			return React.createElement(
+				"h3",
+				null,
+				"No route found"
+			)
 		}
 	}
 }
@@ -124,6 +122,10 @@ export class Link extends React.Component {
 	}
 
 	render() {
-		return <a href={'#' + this.props.to}>{this.props.children}</a>
+		return React.createElement(
+			'a',
+			{ href: '#' + this.props.to },
+			this.props.children
+		);
 	}
 }
