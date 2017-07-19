@@ -45,6 +45,7 @@ exec('git commit -am "Version bump"', (error, stdout, stderr) => {
     console.error(`exec error: ${error}`);
     return;
   }
+  console.log('Updated package json from ' + package.old + ' to ' + package.new);
   console.log(`stdout: ${stdout}`);
   console.log(`stderr: ${stderr}`);
 });
