@@ -1,4 +1,16 @@
 import React, { Component } from 'react'
+import pathToRegexp from 'path-to-regexp'
+
+let routes = []
+export const loadRoutes = (routeConfig) => {
+	if(!routeConfig) return
+	for(var i=0, j=routeConfig.length; i<j; i++) {
+		let keys = []
+		routeConfig[i].regexPath = pathToRegexp(routeConfig[i].path, keys)
+		routeConfig[i].params = keys
+		routes.push(routeConfig[i])
+	}
+}
 
 export const syncStore = (store) => {
 	window.addEventListener('hashchange', function(e) {
@@ -25,7 +37,6 @@ export class Route extends React.Component {
 export const routerReducer = (state = {}, action) => {
 	switch(action.type) {
 		case '@ROUTE_CHANGE':
-			
 			return Object.assign({}, {
 				paths: state.paths ? 
 				[
@@ -68,6 +79,24 @@ export class Router extends React.Component {
 	render() {
 		let currentPath = this.path.hash.replace(/#/, '') || '/'
 		let self  = this
+		let urlSegments = currentPath.split('/').slice(1)
+		let ch = this.props.children
+		let matchSegments = []
+		let params = {}
+		let component = null
+
+		console.log('currentPath', currentPath)
+		//console.log('UrlSegments: ', urlSegments)
+		if(this.path.hash === '' && !/#/.test(window.location.href)) {
+			window.location.href = window.location.href + "#/"
+		}
+		for(var i=0, j=routes.length; i<j; i++) {
+			if(routes[i].regexPath.test(currentPath)) {
+				console.log('Route matched: ', routes[i])
+				component = routes[i].component
+				params = routes[i].params
+			}
+		}
 		const location = {
 			push: function(path) {
 				const ts = new Date().getTime()
@@ -80,31 +109,12 @@ export class Router extends React.Component {
 				})
 			}
 		}
-
-		if(this.path.hash === '' && !/#/.test(window.location.href)) {
-			window.location.href = window.location.href + "#/"
-		}
-
-		// load component based on path
-		let urlSegments = currentPath.split('/').slice(1)
-		let ch = this.props.children
-		let matchSegments = []
-		let params = {}
-
-		for(var i=0, j=ch.length; i<j; i++) {
-			matchSegments = ch[i].props.path.split('/').slice(1)
-			for(var k=0, l=urlSegments.length; k<l; k++) {
-				if(urlSegments[k] === matchSegments[k]) {
-					this.component = ch[i].props.component
-				}
-				if(/:/.test(matchSegments[k])) {
-					// dynamic section - store any corresponding url
-					params[matchSegments[k].replace(':', '')] = urlSegments[k]
-				}
-			}
-		}
-		if(this.component) {
-			return React.createElement(this.component, Object.assign({}, this.props, {params: params, location: location}))
+		params.location = location
+		if(component) {
+			return React.cloneElement(
+				component,
+				[params]
+			)
 		} else {
 			return React.createElement(
 				"h3",
