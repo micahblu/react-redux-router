@@ -40,5 +40,11 @@ const level = process.argv[2] || "patch",
 
 fs.writeFileSync("./package.json", package.output);
 
-exec('git commit -am "Version bump"');
-//console.log('Updated package json from ' + package.old + ' to ' + package.new);
+exec('git commit -am "Version bump"', (error, stdout, stderr) => {
+  if (error) {
+    console.error(`exec error: ${error}`);
+    return;
+  }
+  console.log(`stdout: ${stdout}`);
+  console.log(`stderr: ${stderr}`);
+});
