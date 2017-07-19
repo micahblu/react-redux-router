@@ -1,4 +1,5 @@
-var fs = require('fs');
+var fs = require('fs'),
+    exec = require('child_process').exec;
 
 function bump(file, level) {
   var oldversion = file.match(/"version":\s?"(.+)"/)[1];
@@ -35,10 +36,9 @@ function bump(file, level) {
 }
 
 const level = process.argv[2] || "patch",
-      package = bump(fs.readFileSync("./package.json").toString(), level),
-      bower  = bump(fs.readFileSync("./bower.json").toString(), level);
+      package = bump(fs.readFileSync("./package.json").toString(), level)
 
 fs.writeFileSync("./package.json", package.output);
-console.log('Updated package json from ' + package.old + ' to ' + package.new);
-fs.writeFileSync("./bower.json", bower.output);
-console.log('Updated bower json from ' + bower.old + ' to ' + bower.new);
+
+exec('git commit -am "Version bump"');
+//console.log('Updated package json from ' + package.old + ' to ' + package.new);
