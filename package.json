@@ -1,6 +1,6 @@
 {
   "name": "react-redux-router",
-  "version": "0.0.007",
+  "version": "0.0.008",
   "description": "A simple router for react redux applications",
   "main": "index.js",
   "scripts": {
