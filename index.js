@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import pathToRegexp from 'path-to-regexp'
 
 let routes = []
-export const loadRoutes = (routeConfig) => {
+const loadRoutes = (routeConfig) => {
 	if(!routeConfig) return
 	for(var i=0, j=routeConfig.length; i<j; i++) {
 		let keys = []
@@ -12,16 +12,20 @@ export const loadRoutes = (routeConfig) => {
 	}
 }
 
-export const syncStore = (store) => {
+const RouteAction = (payload) => {
+	return {
+		type: '@@ROUTE_CHANGE',
+		payload: {
+			hash: window.location.hash,
+			search: window.location.search,
+			path: window.location.hash.replace(/#/, '') || '/',
+		}
+	}
+}
+
+const syncStore = (store) => {
 	window.addEventListener('hashchange', function(e) {
-		const ts = new Date().getTime()
-		store.dispatch({
-			type: '@ROUTE_CHANGE',
-			payload: {
-				path: window.location.hash.replace(/#/, '') || '/',
-				time: ts
-			}
-		})
+		store.dispatch(RouteAction())
   });
 }
 
@@ -36,19 +40,8 @@ export class Route extends React.Component {
 }
 export const routerReducer = (state = {}, action) => {
 	switch(action.type) {
-		case '@ROUTE_CHANGE':
-			return Object.assign({}, {
-				paths: state.paths ? 
-				[
-					...state.paths, 
-				{
-					path: action.payload.path,
-					time: action.payload.time
-				}] : [{
-					path: action.payload.path,
-					time: action.payload.time
-				}]
-			})
+		case '@@ROUTE_CHANGE':
+			return action.payload
 			break
 		default:
 			return state
@@ -59,34 +52,36 @@ export class Router extends React.Component {
 	constructor(props) {
 		super(props);
     this.props = props
+		if(!this.props.store) {
+			throw Error('Store must be passed as a property of the Router component')
+		} else if(!this.props.routes) {
+			throw Error('Routes must be passed as a property of the Router component')
+		}
+		syncStore(this.props.store)
+		loadRoutes(this.props.routes)
 	}
 
 	componentWillMount() {
-		this.store = this._reactInternalInstance._context.store
 		this.path = window.location 
 		let statePath = ''
 		let self = this
-		this.store.subscribe(() => {
+		this.props.store.subscribe(() => {
 			// ensure path matches
-			if(this.store.getState().router && this.store.getState().router.paths && this.store.getState().router.paths.length) {
-				statePath = this.store.getState().router.paths.slice(-1)[0].path
+			if(this.props.store.getState().router && this.props.store.getState().router.paths && this.props.store.getState().router.paths.length) {
+				statePath = this.props.store.getState().router.paths.slice(-1)[0].path
 				self.path.replace('#' + statePath)
 			}
 		  this.forceUpdate()
 		})
 	}
 
-	render() {
+	render(props) {
+
 		let currentPath = this.path.hash.replace(/#/, '') || '/'
 		let self  = this
-		let urlSegments = currentPath.split('/').slice(1)
-		let ch = this.props.children
-		let matchSegments = []
 		let params = {}
 		let component = null
 
-		console.log('currentPath', currentPath)
-		//console.log('UrlSegments: ', urlSegments)
 		if(this.path.hash === '' && !/#/.test(window.location.href)) {
 			window.location.href = window.location.href + "#/"
 		}
@@ -99,14 +94,7 @@ export class Router extends React.Component {
 		}
 		const location = {
 			push: function(path) {
-				const ts = new Date().getTime()
-				self.store.dispatch({
-					type: '@ROUTE_CHANGE',
-					payload: {
-						path: path,
-						time: ts
-					}
-				})
+				store.dispatch(RouteAction())
 			}
 		}
 		params.location = location
