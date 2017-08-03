@@ -23,8 +23,10 @@ const RouteAction = (payload) => {
 	}
 }
 
+let lastHash
 const syncStore = (store) => {
 	window.addEventListener('hashchange', function(e) {
+		lastHash = window.location.hash
 		store.dispatch(RouteAction())
   });
 }
@@ -66,12 +68,11 @@ export class Router extends React.Component {
 		let statePath = ''
 		let self = this
 		this.props.store.subscribe(() => {
-			// ensure path matches
-			if(this.props.store.getState().router && this.props.store.getState().router.paths && this.props.store.getState().router.paths.length) {
-				statePath = this.props.store.getState().router.paths.slice(-1)[0].path
-				self.path.replace('#' + statePath)
+			// Re render on state location updates
+			if(this.props.store.getState().router && lastHash !== this.props.store.getState().hash) {
+				lastHash = window.location.hash
+				this.forceUpdate()
 			}
-		  this.forceUpdate()
 		})
 	}
 
@@ -87,7 +88,6 @@ export class Router extends React.Component {
 		}
 		for(var i=0, j=routes.length; i<j; i++) {
 			if(routes[i].regexPath.test(currentPath)) {
-				console.log('Route matched: ', routes[i])
 				component = routes[i].component
 				params = routes[i].params
 			}

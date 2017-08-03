@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 var fs = require('fs'),
     exec = require('child_process').exec;
 
@@ -16,17 +15,12 @@ function bump(file, level) {
   };
   level = level || "patch"; // Assume patch if no level is passed
   next = (parseInt(version[map[level]]) + 1).toString();
-  if(next.length === 1) {
-    leadingZeroes = "00";
-  } else if(next.length == 2) {
-    leadingZeroes = "0";
-  }
   if(level === "major") {
     version[0] = next;
-    version[1] = "000";
-    version[2] = "000";
+    version[1] = "0";
+    version[2] = "0";
   } else {
-    version[map[level]] = leadingZeroes + next;
+    version[map[level]] = next;
   }
   version = version.join('.')
   file = file.replace(oldversion, version)
