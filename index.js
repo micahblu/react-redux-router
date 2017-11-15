@@ -3,8 +3,8 @@ import pathToRegexp from 'path-to-regexp'
 
 let routes = []
 const loadRoutes = (routeConfig) => {
-	if(!routeConfig) return
-	for(var i=0, j=routeConfig.length; i<j; i++) {
+	if (!routeConfig) return
+	for (var i = 0, j = routeConfig.length; i < j; i++) {
 		let keys = []
 		routeConfig[i].regexPath = pathToRegexp(routeConfig[i].path, keys)
 		routeConfig[i].params = keys
@@ -25,10 +25,10 @@ const RouteAction = (payload) => {
 
 let lastHash
 const syncStore = (store) => {
-	window.addEventListener('hashchange', function(e) {
+	window.addEventListener('hashchange', function (e) {
 		lastHash = window.location.hash
 		store.dispatch(RouteAction())
-  });
+	});
 }
 
 export class Route extends React.Component {
@@ -41,7 +41,7 @@ export class Route extends React.Component {
 	}
 }
 export const routerReducer = (state = {}, action) => {
-	switch(action.type) {
+	switch (action.type) {
 		case '@@ROUTE_CHANGE':
 			return action.payload
 			break
@@ -53,10 +53,10 @@ export const routerReducer = (state = {}, action) => {
 export class Router extends React.Component {
 	constructor(props) {
 		super(props);
-    this.props = props
-		if(!this.props.store) {
+		this.props = props
+		if (!this.props.store) {
 			throw Error('Store must be passed as a property of the Router component')
-		} else if(!this.props.routes) {
+		} else if (!this.props.routes) {
 			throw Error('Routes must be passed as a property of the Router component')
 		}
 		syncStore(this.props.store)
@@ -64,12 +64,12 @@ export class Router extends React.Component {
 	}
 
 	componentWillMount() {
-		this.path = window.location 
+		this.path = window.location
 		let statePath = ''
 		let self = this
 		this.props.store.subscribe(() => {
 			// Re render on state location updates
-			if(this.props.store.getState().router && lastHash !== this.props.store.getState().hash) {
+			if (this.props.store.getState().router && lastHash !== this.props.store.getState().hash) {
 				lastHash = window.location.hash
 				this.forceUpdate()
 			}
@@ -79,31 +79,42 @@ export class Router extends React.Component {
 	render(props) {
 
 		let currentPath = this.path.hash.replace(/#/, '') || '/'
-		let self  = this
+		let self = this
 		let params = {}
 		let component = null
+		let successCb
+		let errorCb
 
-		if(this.path.hash === '' && !/#/.test(window.location.href)) {
+		if (this.path.hash === '' && !/#/.test(window.location.href)) {
 			window.location.href = window.location.href + "#/"
 		}
-		for(var i=0, j=routes.length; i<j; i++) {
-			if(routes[i].regexPath.test(currentPath)) {
+		for (var i = 0, j = routes.length; i < j; i++) {
+			if (routes[i].regexPath.test(currentPath)) {
 				component = routes[i].component
+				successCb = routes[i].success
+				errorCb = routes[i].error
 				params = routes[i].params
 			}
 		}
+
 		const location = {
-			push: function(path) {
-				store.dispatch(RouteAction())
+			push: (path) => {
+				this.props.store.dispatch(RouteAction())
 			}
 		}
 		params.location = location
-		if(component) {
+		if (component) {
+			if (successCb) {
+				successCb(this.props.store.dispatch)
+			}
 			return React.cloneElement(
 				component,
 				[params]
 			)
 		} else {
+			if (errorCb) {
+				errorCb(this.props.store.dispatch)
+			}
 			return React.createElement(
 				"h3",
 				null,
