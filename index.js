@@ -23,23 +23,6 @@ const RouteAction = (payload) => {
 	}
 }
 
-let lastHash
-const syncStore = (store) => {
-	window.addEventListener('hashchange', function (e) {
-		lastHash = window.location.hash
-		store.dispatch(RouteAction())
-	});
-}
-
-export class Route extends React.Component {
-	constructor(props) {
-		super(props);
-		this.props = props
-	}
-	render() {
-		return null
-	}
-}
 export const routerReducer = (state = {}, action) => {
 	switch (action.type) {
 		case '@@ROUTE_CHANGE':
@@ -54,12 +37,15 @@ export class Router extends React.Component {
 	constructor(props) {
 		super(props);
 		this.props = props
+		this.state = {
+			path: window.location.hash.replace(/#/, '') || '/'
+		}
+
 		if (!this.props.store) {
 			throw Error('Store must be passed as a property of the Router component')
 		} else if (!this.props.routes) {
 			throw Error('Routes must be passed as a property of the Router component')
 		}
-		syncStore(this.props.store)
 		loadRoutes(this.props.routes)
 	}
 
@@ -67,32 +53,33 @@ export class Router extends React.Component {
 		this.path = window.location
 		let statePath = ''
 		let self = this
-		this.props.store.subscribe(() => {
-			// Re render on state location updates
-			if (this.props.store.getState().router && lastHash !== this.props.store.getState().hash) {
-				lastHash = window.location.hash
-				this.forceUpdate()
-			}
-		})
+		let lastHash
+		let store = this.props.store
+
+		store.dispatch(RouteAction())
+
+		window.addEventListener('hashchange', (e) => {
+			lastHash = window.location.hash
+			this.setState({
+				path: lastHash
+			})
+			store.dispatch(RouteAction())
+		});
 	}
 
 	render(props) {
 
-		let currentPath = this.path.hash.replace(/#/, '') || '/'
+		let currentPath = this.state.path.replace(/#/, '') || '/'
 		let self = this
 		let params = {}
 		let component = null
-		let successCb
-		let errorCb
 
-		if (this.path.hash === '' && !/#/.test(window.location.href)) {
+		if (this.state.path === '' && !/#/.test(window.location.href)) {
 			window.location.href = window.location.href + "#/"
 		}
 		for (var i = 0, j = routes.length; i < j; i++) {
 			if (routes[i].regexPath.test(currentPath)) {
 				component = routes[i].component
-				successCb = routes[i].success
-				errorCb = routes[i].error
 				params = routes[i].params
 			}
 		}
@@ -104,17 +91,11 @@ export class Router extends React.Component {
 		}
 		params.location = location
 		if (component) {
-			if (successCb) {
-				successCb(this.props.store.dispatch)
-			}
 			return React.cloneElement(
 				component,
 				[params]
 			)
 		} else {
-			if (errorCb) {
-				errorCb(this.props.store.dispatch)
-			}
 			return React.createElement(
 				"h3",
 				null,
