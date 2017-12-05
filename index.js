@@ -19,6 +19,7 @@ const RouteAction = (payload) => {
 			hash: window.location.hash,
 			search: window.location.search,
 			path: window.location.hash.replace(/#/, '') || '/',
+			params: payload ? payload.params : null
 		}
 	}
 }
@@ -56,41 +57,61 @@ export class Router extends React.Component {
 		let lastHash
 		let store = this.props.store
 
-		store.dispatch(RouteAction())
+		let [component, params] = this.getComponentFromRoute(routes, this.state.path)
+		store.dispatch(RouteAction({ params: params }))
 
 		window.addEventListener('hashchange', (e) => {
 			lastHash = window.location.hash
 			this.setState({
 				path: lastHash
 			})
-			store.dispatch(RouteAction())
+			let [component, params] = this.getComponentFromRoute(routes, lastHash)
+			store.dispatch(RouteAction({params: params}))
 		});
+	}
+
+	getComponentFromRoute(routes, currentPath) {
+		let component=null
+		let params=null
+		let matches
+		for (var i = 0, j = routes.length; i < j; i++) {
+			matches = currentPath.match(routes[i].regexPath)
+			if(matches) {
+				matches.shift()
+				params = matches.map((value, index)=>{
+					return {
+						name: routes[i].params[index].name,
+						value: value
+					}
+				})
+			}
+
+			if (routes[i].regexPath.test(currentPath)) {
+				component = routes[i].component
+				params = params
+			}
+		}
+		return [component, params]
 	}
 
 	render(props) {
 
 		let currentPath = this.state.path.replace(/#/, '') || '/'
 		let self = this
-		let params = {}
-		let component = null
 
 		if (this.state.path === '' && !/#/.test(window.location.href)) {
 			window.location.href = window.location.href + "#/"
 		}
-		for (var i = 0, j = routes.length; i < j; i++) {
-			if (routes[i].regexPath.test(currentPath)) {
-				component = routes[i].component
-				params = routes[i].params
-			}
-		}
 
-		const location = {
-			push: (path) => {
-				this.props.store.dispatch(RouteAction())
-			}
-		}
-		params.location = location
+		let [component, params] = this.getComponentFromRoute(routes, currentPath)
+
 		if (component) {
+			const location = {
+				push: (path) => {
+					this.props.store.dispatch(RouteAction())
+				}
+			}
+			params.location = location
 			return React.cloneElement(
 				component,
 				[params]
