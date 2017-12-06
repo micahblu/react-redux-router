@@ -65,7 +65,9 @@ export class Router extends React.Component {
 			this.setState({
 				path: lastHash
 			})
-			let [component, params] = this.getComponentFromRoute(routes, lastHash)
+			let currentPath = lastHash.replace(/#/, '') || '/'
+			let [component, params] = this.getComponentFromRoute(routes, currentPath)
+			
 			store.dispatch(RouteAction({params: params}))
 		});
 	}
